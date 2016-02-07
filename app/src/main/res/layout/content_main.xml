@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -10,25 +11,116 @@
     android:paddingTop="@dimen/activity_vertical_margin"
     app:layout_behavior="@string/appbar_scrolling_view_behavior"
     tools:context="com.ions.facedetector.MainActivity"
-    tools:showIn="@layout/activity_main" android:orientation="horizontal">
+    tools:showIn="@layout/activity_main">
+
+    <LinearLayout
+        android:id="@+id/images_row"
+        android:layout_width="match_parent"
+        android:layout_height="200dp"
+        android:baselineAligned="false"
+        android:clickable="false"
+        android:orientation="horizontal">
 
 
-    <ImageView
-        android:layout_weight="1"
-        android:id="@+id/captured_image_view"
+        <ImageView
+            android:id="@+id/captured_image_view"
+            android:layout_width="wrap_content"
+            android:layout_height="200dp"
+            android:layout_weight="1"
+            android:background="#E0E0E0"
+            android:padding="@dimen/activity_horizontal_margin"
+            android:adjustViewBounds="true"
+            android:scaleType="fitCenter" />
+
+        <View
+            android:layout_width="1dp"
+            android:layout_height="wrap_content" />
+
+        <ImageView
+            android:id="@+id/result_image_view"
+            android:layout_width="wrap_content"
+            android:layout_height="200dp"
+            android:layout_weight="1"
+            android:adjustViewBounds="true"
+            android:background="#E0E0E0"
+            android:padding="@dimen/activity_horizontal_margin"
+            android:scaleType="fitCenter" />
+
+    </LinearLayout>
+
+    <GridLayout
+        android:id="@+id/details_grid"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:scaleType="fitCenter"
-        android:adjustViewBounds="true"
-        android:padding="@dimen/activity_horizontal_margin" />
+        android:layout_below="@+id/images_row"
+        android:layout_centerHorizontal="true"
+        android:columnCount="2"
+        android:padding="@dimen/activity_horizontal_margin"
+        android:rowCount="3">
 
-    <ImageView
-        android:layout_weight="1"
-        android:id="@+id/result_image_view"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:scaleType="fitCenter"
-        android:adjustViewBounds="true"
-        android:padding="@dimen/activity_horizontal_margin" />
+        <TextView
+            android:id="@+id/result_label_text_view"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_column="0"
+            android:layout_row="0"
+            android:layout_gravity="center"
+            android:text="@string/result_label"
+            android:textAppearance="?android:textAppearanceMedium" />
 
-</LinearLayout>
+        <TextView
+            android:id="@+id/result_text_view"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_column="1"
+            android:layout_row="0"
+            android:textAppearance="?android:textAppearanceMedium" />
+
+
+        <TextView
+            android:id="@+id/age_label_text_view"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_column="0"
+            android:layout_gravity="center"
+            android:layout_row="1"
+            android:text="@string/age_label"
+            android:textAppearance="?android:textAppearanceMedium" />
+
+        <TextView
+            android:id="@+id/age_text_view"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_column="1"
+            android:layout_gravity="center"
+            android:layout_row="1"
+            android:textAppearance="?android:textAppearanceMedium" />
+
+
+        <TextView
+            android:id="@+id/emotion_label_text_view"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_column="0"
+            android:layout_row="2"
+            android:layout_gravity="center"
+            android:text="@string/emotion_label"
+            android:textAppearance="?android:textAppearanceMedium" />
+
+        <TextView
+            android:id="@+id/emotion_text_view"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_column="1"
+            android:layout_row="2"
+            android:textAppearance="?android:textAppearanceMedium" />
+
+
+
+    </GridLayout>
+
+</RelativeLayout>
+
+

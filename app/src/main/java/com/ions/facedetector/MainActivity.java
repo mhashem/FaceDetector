@@ -9,6 +9,7 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.PersistableBundle;
+import android.os.SystemClock;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
@@ -22,6 +23,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
+import android.widget.TextView;
 
 import com.microsoft.projectoxford.face.FaceServiceClient;
 import com.microsoft.projectoxford.face.FaceServiceRestClient;
@@ -45,14 +47,16 @@ import java.util.Locale;
  */
 public class MainActivity extends AppCompatActivity {
 
-    private final int CAPTURE_IMAGE_CODE = 1;
-    private final int PERMISSION_WRITE_EXTERNAL_STORAGE = 2;
     private final String TAG = MainActivity.class.getSimpleName();
 
-    private ImageView mCapturedImageView, mResultImageView;
-    private FloatingActionButton mCameraFab;
+    private final int CAPTURE_IMAGE_CODE = 1;
+    private final int PERMISSION_WRITE_EXTERNAL_STORAGE = 2;
 
     private ProgressDialog mProgressDialog;
+
+    private FloatingActionButton mCameraFab;
+    private ImageView mCapturedImageView, mResultImageView;
+    private TextView mAgeTextView, mEmotionTextView, mResultTextView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,14 +64,21 @@ public class MainActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_main);
 
+        // bind Toolbar
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
+        // bind views
         mCapturedImageView = (ImageView) findViewById(R.id.captured_image_view);
         mResultImageView = (ImageView) findViewById(R.id.result_image_view);
+        mAgeTextView = (TextView) findViewById(R.id.age_text_view);
+        mEmotionTextView = (TextView) findViewById(R.id.emotion_text_view);
+        mResultTextView = (TextView) findViewById(R.id.result_text_view);
 
+        // create ProgressDialog
         mProgressDialog = new ProgressDialog(this);
         mProgressDialog.setTitle(getString(R.string.progress_dialog_title));
+
 
         mCameraFab = (FloatingActionButton) findViewById(R.id.fab);
         mCameraFab.setOnClickListener(new View.OnClickListener() {
@@ -85,7 +96,7 @@ public class MainActivity extends AppCompatActivity {
                 if (captureImageIntent.resolveActivity(getPackageManager()) != null) {
 
                     String imageFileName = new SimpleDateFormat("yyyyMMddhhmm'.jpg'", Locale.getDefault()).format(new Date());
-                    File photoFile = FileUtils.createImageFile(imageFileName);
+                    File photoFile = Utils.createImageFile(imageFileName);
                     PreferencesUtils.saveCapturedImageName(MainActivity.this, imageFileName);
 
                     /**
@@ -201,11 +212,14 @@ public class MainActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
 
         if (resultCode == RESULT_OK && requestCode == CAPTURE_IMAGE_CODE) {
-            Uri imageUri = data.getData();
-            Bitmap imageBitmap = ImageHelper.loadSizeLimitedBitmapFromUri(imageUri, getContentResolver());
+            Uri photoTakenUri = Uri.fromFile(Utils.getPictureFile(PreferencesUtils.getCapturedImageName(this)));
+
+            Log.d(TAG, photoTakenUri.getAuthority());
+
+            Bitmap imageBitmap = ImageHelper.loadSizeLimitedBitmapFromUri(photoTakenUri, getContentResolver());
             mCapturedImageView.setImageBitmap(imageBitmap);
 
-            //mCapturedImageView.setImageBitmap(FileUtils.getScaledBitmap(PreferencesUtils.getCapturedImageName(this)));
+            //mCapturedImageView.setImageBitmap(Utils.getScaledBitmap(PreferencesUtils.getCapturedImageName(this)));
             new DetectionTask().execute();
         }
     }
@@ -221,6 +235,8 @@ public class MainActivity extends AppCompatActivity {
 
         private Bitmap imageBitmap;
 
+        private long startTime = 0, stopTime = 0;
+
         @Override
         protected void onPreExecute() {
             mProgressDialog.show();
@@ -231,14 +247,16 @@ public class MainActivity extends AppCompatActivity {
         protected Face[] doInBackground(Void... params) {
             // Get an instance of face service client to detect faces in image.
 
+            startTime = SystemClock.currentThreadTimeMillis();
+
             String capturedImageName = PreferencesUtils.getCapturedImageName(MainActivity.this);
-            imageBitmap = FileUtils.getScaledBitmap(capturedImageName);
+            imageBitmap = Utils.getScaledBitmap(capturedImageName);
 
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
             imageBitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream);
             ByteArrayInputStream inputStream = new ByteArrayInputStream(outputStream.toByteArray());
 
-            FaceServiceClient faceServiceClient = new FaceServiceRestClient(FileUtils.getProjectOxfordFaceDetectionKey(MainActivity.this));
+            FaceServiceClient faceServiceClient = new FaceServiceRestClient(BuildConfig.FACE_DETECTION_KEY);
 
             try {
                 publishProgress("Detecting...");
@@ -273,18 +291,42 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         protected void onPostExecute(Face[] result) {
+
+            stopTime = SystemClock.currentThreadTimeMillis();
+
             if (mProgressDialog != null) {
                 mProgressDialog.dismiss();
             }
-
-            Bitmap e = ImageHelper.drawFaceRectanglesOnBitmap(imageBitmap, result, true);
-            mResultImageView.setImageBitmap(e);
             setButtonsEnabledStatus(true);
+
+            if(result != null && result.length > 0) {
+                Bitmap e = ImageHelper.drawFaceRectanglesOnBitmap(imageBitmap, result, true);
+                mResultImageView.setImageBitmap(e);
+                mResultTextView.setText(String.format(Locale.getDefault(), "%d faces detected in %.2f ms", result.length, (double)(stopTime - startTime)));
+                mAgeTextView.setText(String.valueOf(result[0].faceAttributes.age));
+                mEmotionTextView.setText(String.valueOf(result[0].faceAttributes.smile));
+            }
+            else {
+                mResultTextView.setText(getString(R.string.no_result_detected));
+            }
+
+            //result[0].faceAttributes.facialHair.
+
         }
     }
 
     public void setButtonsEnabledStatus(boolean status) {
         mCameraFab.setEnabled(status);
     }
+
+//    "anger": 0.00300731952,
+//    "contempt": 5.14648448E-08,
+//    "disgust": 9.180124E-06,
+//    "fear": 0.0001912825,
+//    "happiness": 0.9875571,
+//    "neutral": 0.0009861537,
+//    "sadness": 1.889955E-05,
+//    "surprise": 0.008229999
+
 
 }

@@ -4,12 +4,16 @@ android {
     compileSdkVersion 23
     buildToolsVersion "23.0.2"
 
+    def faceDetectionKey = readKey("face.detection.key")
+
     defaultConfig {
         applicationId "com.ions.facedetector"
         minSdkVersion 16
         targetSdkVersion 23
         versionCode 1
         versionName "1.0"
+
+        buildConfigField "String", "FACE_DETECTION_KEY", "\"$faceDetectionKey\""
     }
     buildTypes {
         release {
@@ -27,4 +31,17 @@ dependencies {
     compile 'com.android.support:design:23.1.1'
     compile 'com.microsoft.projectoxford:face:1.0.0'
     compile 'com.android.support:support-v4:23.1.1'
+}
+
+def readKey (String key) {
+    def rootDir = project.rootDir
+    def localProperties = new File(rootDir, "local.properties")
+    if (localProperties.exists()) {
+        Properties properties = new Properties()
+        localProperties.withInputStream { instr ->
+            properties.load(instr)
+        }
+        return properties.getProperty(key)
+    }
+    return "NOT-FOUND"
 }

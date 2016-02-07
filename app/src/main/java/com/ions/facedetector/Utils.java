@@ -1,21 +1,18 @@
 package com.ions.facedetector;
 
-import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Environment;
 import android.util.Log;
 
 import java.io.File;
-import java.io.InputStream;
-import java.util.Properties;
 
 /**
  * @author mhashem on 2/5/16.
  */
-public class FileUtils {
+public class Utils {
 
-    private static final String TAG = FileUtils.class.getSimpleName();
+    private static final String TAG = Utils.class.getSimpleName();
 
     public static final String APP_PICTURES_DIR = Environment.DIRECTORY_PICTURES.concat("/FaceDetector/");
 
@@ -101,19 +98,6 @@ public class FileUtils {
         bmOptions.inSampleSize = scaleFactor;
 
         return BitmapFactory.decodeFile(getPicturePath(imageName), bmOptions);
-    }
-
-    public static String getProjectOxfordFaceDetectionKey(Context context) {
-        String key = "NO-KEY";
-        try {
-            InputStream inputStream = context.getAssets().open("local.properties");
-            Properties properties = new Properties();
-            properties.load(inputStream);
-            key = properties.getProperty("face.detection.key");
-        } catch (Exception e) {
-            Log.e(TAG, e.getMessage(), e);
-        }
-        return key;
     }
 
 }
