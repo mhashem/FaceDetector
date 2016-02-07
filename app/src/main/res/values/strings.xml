@@ -63,4 +63,8 @@
     <string name="pref_title_vibrate">Vibrate</string>
     <string name="permission_say_why">Writing external storage is important</string>
     <string name="grant">GRANT</string>
+    <string name="age_label">Age</string>
+    <string name="emotion_label">Emotion</string>
+    <string name="result_label">Result</string>
+    <string name="no_result_detected">No result detected</string>
 </resources>
