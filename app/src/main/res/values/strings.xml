@@ -67,4 +67,5 @@
     <string name="emotion_label">Emotion</string>
     <string name="result_label">Result</string>
     <string name="no_result_detected">No result detected</string>
+    <string name="action_share">Share</string>
 </resources>

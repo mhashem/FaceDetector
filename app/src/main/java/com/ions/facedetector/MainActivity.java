@@ -110,11 +110,11 @@ public class MainActivity extends AppCompatActivity {
                         captureImageIntent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(photoFile));
 
                         /**
-                         * The result will be handled
+                         * The result will be handled in onActivityResult(...)
                          */
                         startActivityForResult(captureImageIntent, CAPTURE_IMAGE_CODE);
                     } else {
-                        Log.w(TAG, "Failed to create photo file");
+                        Log.w(TAG, "Failed to create file");
                     }
                 }
             }
@@ -198,10 +198,14 @@ public class MainActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
 
-        if (id == R.id.action_settings) {
-            Intent settingsIntent = new Intent(this, SettingsActivity.class);
-            startActivity(settingsIntent);
-            return true;
+        if (id == R.id.action_share) {
+            // share result
+            Intent sharingIntent = new Intent(android.content.Intent.ACTION_SEND);
+            sharingIntent.setType("text/plain");
+            sharingIntent.putExtra(android.content.Intent.EXTRA_SUBJECT, "#FaceDetector @ Github");
+            sharingIntent.putExtra(android.content.Intent.EXTRA_TEXT, "checkout a working copy of my app https://github.com/mhashem/FaceDetector");
+            startActivity(sharingIntent);
+            //startActivity(Intent.createChooser(sharingIntent, getResources().getString(R.string.share_using)));
         }
 
         return super.onOptionsItemSelected(item);
@@ -214,13 +218,13 @@ public class MainActivity extends AppCompatActivity {
         if (resultCode == RESULT_OK && requestCode == CAPTURE_IMAGE_CODE) {
             Uri photoTakenUri = Uri.fromFile(Utils.getPictureFile(PreferencesUtils.getCapturedImageName(this)));
 
-            Log.d(TAG, photoTakenUri.getAuthority());
-
-            Bitmap imageBitmap = ImageHelper.loadSizeLimitedBitmapFromUri(photoTakenUri, getContentResolver());
-            mCapturedImageView.setImageBitmap(imageBitmap);
-
-            //mCapturedImageView.setImageBitmap(Utils.getScaledBitmap(PreferencesUtils.getCapturedImageName(this)));
-            new DetectionTask().execute();
+            try {
+                Bitmap imageBitmap = ImageHelper.loadSizeLimitedBitmapFromUri(photoTakenUri, getContentResolver());
+                mCapturedImageView.setImageBitmap(imageBitmap);
+                new FaceDetectionTask().execute(imageBitmap);
+            } catch (Exception e) {
+                Log.e(TAG, e.getMessage(), e);
+            }
         }
     }
 
@@ -229,37 +233,39 @@ public class MainActivity extends AppCompatActivity {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
     }
 
-    private class DetectionTask extends AsyncTask<Void, String, Face[]> {
+    private class FaceDetectionTask extends AsyncTask<Bitmap, String, Face[]> {
+
 
         private boolean mSucceed = true;
+        private long startTime = 0, stopTime = 0;
 
         private Bitmap imageBitmap;
-
-        private long startTime = 0, stopTime = 0;
 
         @Override
         protected void onPreExecute() {
             mProgressDialog.show();
-            setButtonsEnabledStatus(false);
+            mProgressDialog.setMessage("starting face detection...");
+
+            toggleButtonsStatus(false);
         }
 
         @Override
-        protected Face[] doInBackground(Void... params) {
+        protected Face[] doInBackground(Bitmap... params) {
             // Get an instance of face service client to detect faces in image.
 
             startTime = SystemClock.currentThreadTimeMillis();
 
-            String capturedImageName = PreferencesUtils.getCapturedImageName(MainActivity.this);
-            imageBitmap = Utils.getScaledBitmap(capturedImageName);
 
+            imageBitmap = params[0];
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
             imageBitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream);
             ByteArrayInputStream inputStream = new ByteArrayInputStream(outputStream.toByteArray());
 
+
             FaceServiceClient faceServiceClient = new FaceServiceRestClient(BuildConfig.FACE_DETECTION_KEY);
 
             try {
-                publishProgress("Detecting...");
+                publishProgress("detecting...");
 
                 // Start detection.
                 return faceServiceClient.detect(
@@ -297,36 +303,22 @@ public class MainActivity extends AppCompatActivity {
             if (mProgressDialog != null) {
                 mProgressDialog.dismiss();
             }
-            setButtonsEnabledStatus(true);
 
-            if(result != null && result.length > 0) {
+            toggleButtonsStatus(true);
+
+            if (result != null && result.length > 0 && mSucceed) {
                 Bitmap e = ImageHelper.drawFaceRectanglesOnBitmap(imageBitmap, result, true);
                 mResultImageView.setImageBitmap(e);
-                mResultTextView.setText(String.format(Locale.getDefault(), "%d faces detected in %.2f ms", result.length, (double)(stopTime - startTime)));
-                mAgeTextView.setText(String.valueOf(result[0].faceAttributes.age));
-                mEmotionTextView.setText(String.valueOf(result[0].faceAttributes.smile));
-            }
-            else {
+                mResultTextView.setText(String.format(Locale.getDefault(), "%d face/s detected in %.2f sec", result.length, ((double) (stopTime - startTime) / 1000)));
+                mAgeTextView.setText(String.valueOf("~ " + result[0].faceAttributes.age));
+                mEmotionTextView.setText(String.valueOf(Utils.describeEmotion(result[0].faceAttributes.smile)));
+            } else {
                 mResultTextView.setText(getString(R.string.no_result_detected));
             }
-
-            //result[0].faceAttributes.facialHair.
-
         }
     }
 
-    public void setButtonsEnabledStatus(boolean status) {
+    public void toggleButtonsStatus(boolean status) {
         mCameraFab.setEnabled(status);
     }
-
-//    "anger": 0.00300731952,
-//    "contempt": 5.14648448E-08,
-//    "disgust": 9.180124E-06,
-//    "fear": 0.0001912825,
-//    "happiness": 0.9875571,
-//    "neutral": 0.0009861537,
-//    "sadness": 1.889955E-05,
-//    "surprise": 0.008229999
-
-
 }

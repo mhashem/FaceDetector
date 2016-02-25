@@ -100,4 +100,50 @@ public class Utils {
         return BitmapFactory.decodeFile(getPicturePath(imageName), bmOptions);
     }
 
+    //    "contempt": 5.14648448E-08,
+    //    "disgust": 9.180124E-06,
+    //    "sadness": 1.889955E-05,
+    //    "fear": 0.0001912825,
+    //    "neutral": 0.0009861537,
+    //    "anger": 0.00300731952,
+    //    "surprise": 0.008229999
+    //    "happiness": 0.9875571,
+    public static String describeEmotion(double val) {
+
+        if(val >= 0.98) {
+            return "seems happy!";
+        }
+
+        if(val >= 0.008) {
+            return "seems surprised!";
+        }
+
+        if(val >= 0.003) {
+            return "seems angry!";
+        }
+
+        if(val >= 0.0009) {
+            return "neutral";
+        }
+
+        if(val >= 0.00019) {
+            return "fear!";
+        }
+
+        if(val >= 0.0000018) {
+            return "why sad?";
+        }
+
+        if(val >= 9.1E06) {
+            return "disgust!";
+        }
+
+        if(val >= 5.14E08) {
+            return "contempt!";
+        }
+
+
+        return "I can't realise!";
+    }
+
 }
