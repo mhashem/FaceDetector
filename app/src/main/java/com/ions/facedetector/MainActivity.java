@@ -15,6 +15,7 @@ import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.ShareCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -200,12 +201,18 @@ public class MainActivity extends AppCompatActivity {
 
         if (id == R.id.action_share) {
             // share result
-            Intent sharingIntent = new Intent(android.content.Intent.ACTION_SEND);
-            sharingIntent.setType("text/plain");
-            sharingIntent.putExtra(android.content.Intent.EXTRA_SUBJECT, "#FaceDetector @ Github");
-            sharingIntent.putExtra(android.content.Intent.EXTRA_TEXT, "checkout a working copy of my app https://github.com/mhashem/FaceDetector");
-            startActivity(sharingIntent);
+            //Intent sharingIntent = new Intent(android.content.Intent.ACTION_SEND);
+            //sharingIntent.setType("text/plain");
+            //sharingIntent.putExtra(android.content.Intent.EXTRA_SUBJECT, "#FaceDetector @ Github");
+            //sharingIntent.putExtra(android.content.Intent.EXTRA_TEXT, "checkout a working copy of my app https://github.com/mhashem/FaceDetector");
+            //startActivity(sharingIntent);
             //startActivity(Intent.createChooser(sharingIntent, getResources().getString(R.string.share_using)));
+
+            Intent shareIntent = ShareCompat.IntentBuilder
+                    .from(this)
+                    .setText("checkout a working copy of my app https://github.com/mhashem/FaceDetector")
+                    .setSubject("#FaceDetector @ Github").setType("text/plain").getIntent();
+            startActivity(shareIntent);
         }
 
         return super.onOptionsItemSelected(item);
